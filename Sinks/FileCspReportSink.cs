@@ -34,4 +34,24 @@ public sealed class FileCspReportSink : ICspReportSink
             _lock.Release();
         }
     }
+
+    public async Task<long> GetCountAsync(CancellationToken ct = default)
+    {
+        if (!File.Exists(_path))
+            return 0;
+
+        await _lock.WaitAsync(ct);
+        try
+        {
+            long count = 0;
+            using var sr = new StreamReader(_path);
+            while (await sr.ReadLineAsync(ct) is not null)
+                count++;
+            return count;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
 }

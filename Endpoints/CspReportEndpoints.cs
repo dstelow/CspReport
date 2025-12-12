@@ -11,6 +11,7 @@ public static class CspReportEndpoints
     public static void MapCspReportEndpoints(this WebApplication app)
     {
         app.MapPost("/csp/report-uri", HandleLegacyReport);
+        app.MapGet("/csp/count", GetCount);
     }
 
     private static async Task<IResult> HandleLegacyReport(
@@ -34,4 +35,11 @@ public static class CspReportEndpoints
 
         return Results.NoContent();
     }
+
+    private static async Task<IResult> GetCount(ICspReportSink sink)
+    {
+        var count = await sink.GetCountAsync();
+        return Results.Ok(new { count });
+    }
+
 }
