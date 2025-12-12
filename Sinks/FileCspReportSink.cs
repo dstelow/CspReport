@@ -54,4 +54,48 @@ public sealed class FileCspReportSink : ICspReportSink
             _lock.Release();
         }
     }
+
+    public async Task<IReadOnlyList<CspReportEnvelope>> GetReportsAsync(int skip = 0, int take = 10, CancellationToken ct = default)
+    {
+        if (!File.Exists(_path))
+            return Array.Empty<CspReportEnvelope>();
+
+        await _lock.WaitAsync(ct);
+        try
+        {
+            var reports = new List<CspReportEnvelope>();
+            using var sr = new StreamReader(_path);
+            
+            int currentLine = 0;
+            string? line;
+            
+            while ((line = await sr.ReadLineAsync(ct)) is not null)
+            {
+                if (currentLine >= skip && reports.Count < take)
+                {
+                    try
+                    {
+                        var envelope = JsonSerializer.Deserialize<CspReportEnvelope>(line, JsonOptions);
+                        if (envelope is not null)
+                            reports.Add(envelope);
+                    }
+                    catch (JsonException)
+                    {
+                        // Skip malformed lines
+                    }
+                }
+                
+                currentLine++;
+                
+                if (reports.Count >= take)
+                    break;
+            }
+            
+            return reports;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
 }

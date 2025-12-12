@@ -12,6 +12,7 @@ public static class CspReportEndpoints
     {
         app.MapPost("/csp/report-uri", HandleLegacyReport);
         app.MapGet("/csp/count", GetCount);
+        app.MapGet("/csp/reports", GetReports);
     }
 
     private static async Task<IResult> HandleLegacyReport(
@@ -40,6 +41,21 @@ public static class CspReportEndpoints
     {
         var count = await sink.GetCountAsync();
         return Results.Ok(new { count });
+    }
+
+    private static async Task<IResult> GetReports(
+        ICspReportSink sink,
+        int skip = 0,
+        int take = 10)
+    {
+        if (take < 1 || take > 100)
+            return Results.BadRequest(new { error = "take must be between 1 and 100" });
+
+        if (skip < 0)
+            return Results.BadRequest(new { error = "skip must be non-negative" });
+
+        var reports = await sink.GetReportsAsync(skip, take);
+        return Results.Ok(new { skip, take, count = reports.Count, reports });
     }
 
 }
