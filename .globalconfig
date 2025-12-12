@@ -1,0 +1,72 @@
+is_global = true
+
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = none
+
+# CA1848: Use the LoggerMessage delegates
+dotnet_diagnostic.CA1848.severity = suggestion
+
+# CA2007: Consider calling ConfigureAwait on the awaited task
+dotnet_diagnostic.CA2007.severity = none
+
+# IDE0058: Expression value is never used
+dotnet_diagnostic.IDE0058.severity = none
+
+# IDE0290: Use primary constructor
+dotnet_diagnostic.IDE0290.severity = suggestion
+
+# Async method names should end with Async
+dotnet_diagnostic.VSTHRD200.severity = warning
+
+# Use ConfigureAwait(false) in library code
+dotnet_diagnostic.VSTHRD111.severity = none
+
+# Avoid async void methods
+dotnet_diagnostic.VSTHRD100.severity = warning
+
+# Call async methods when in an async method
+dotnet_diagnostic.VSTHRD103.severity = warning
+
+# Avoid problematic synchronous waits
+dotnet_diagnostic.VSTHRD002.severity = error
+
+# Use .ConfigureAwait(bool)
+dotnet_diagnostic.CA2007.severity = none
+
+# File-scoped namespaces
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Prefer explicit types for primitives
+csharp_style_var_for_built_in_types = false:warning
+
+# Require braces
+csharp_prefer_braces = true:warning
+
+# Readonly fields
+dotnet_style_readonly_field = true:warning
+
+# Sealed classes (when appropriate)
+# Note: This is enforced through code review and Copilot instructions
+
+# Nullable reference types
+dotnet_diagnostic.CS8600.severity = warning
+dotnet_diagnostic.CS8601.severity = warning
+dotnet_diagnostic.CS8602.severity = warning
+dotnet_diagnostic.CS8603.severity = warning
+dotnet_diagnostic.CS8604.severity = warning
+dotnet_diagnostic.CS8618.severity = warning
+dotnet_diagnostic.CS8625.severity = warning
+
+# Prefer pattern matching
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+
+# Prefer simplified null checking
+csharp_style_conditional_delegate_call = true:warning
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:warning
+
+# Unused parameters
+dotnet_code_quality_unused_parameters = all:warning
+
+# Unnecessary suppression
+dotnet_remove_unnecessary_suppression_exclusions = none
