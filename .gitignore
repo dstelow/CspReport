@@ -1,0 +1,70 @@
+# ================================
+# .NET / Visual Studio
+# ================================
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# ================================
+# OS / Editor junk
+# ================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+*.swp
+*.tmp
+
+# ================================
+# Logs & runtime data
+# ================================
+Logs/
+*.log
+*.jsonl
+
+# ================================
+# Local configuration overrides
+# ================================
+appsettings.Development.json
+appsettings.Local.json
+
+# ================================
+# Certificates
+# ================================
+*.pfx
+*.crt
+*.key
+
+# ================================
+# Docker (if you add later)
+# ================================
+docker-compose.override.yml
+
+# ================================
+# Coverage / test output
+# ================================
+coverage/
+*.coverage
+*.coveragexml
+
+# ================================
+# NuGet
+# ================================
+packages/
+.nuget/
+
+# ================================
+# Misc
+# ================================
+*.bak
+*.orig
