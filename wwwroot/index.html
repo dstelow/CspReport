@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP Reports - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .stat {
+            flex: 1;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-top: 5px;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+        
+        .refresh-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .last-updated {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .timestamp {
+            color: #666;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        .uri {
+            color: #667eea;
+            word-break: break-all;
+            max-width: 300px;
+        }
+        
+        .directive {
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .ip {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            margin: 20px 30px;
+            border-radius: 6px;
+            border-left: 4px solid #c33;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CSP Violation Reports</h1>
+            <div class="subtitle">Content Security Policy monitoring dashboard</div>
+        </header>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Total Reports</div>
+                <div class="stat-value" id="totalCount">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Showing</div>
+                <div class="stat-value" id="displayedCount">-</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="refresh-btn" id="refreshBtn" onclick="loadReports()">
+                Refresh
+            </button>
+            <div class="last-updated" id="lastUpdated">Never updated</div>
+        </div>
+        
+        <div class="table-container" id="tableContainer">
+            <div class="loading">Loading reports...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadReports() {
+            const btn = document.getElementById('refreshBtn');
+            const container = document.getElementById('tableContainer');
+            
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            
+            try {
+                // Fetch count
+                const countResponse = await fetch('/csp/count');
+                const countData = await countResponse.json();
+                document.getElementById('totalCount').textContent = countData.count.toLocaleString();
+                
+                // Fetch latest 20 reports
+                const reportsResponse = await fetch('/csp/reports?skip=0&take=20');
+                const reportsData = await reportsResponse.json();
+                
+                document.getElementById('displayedCount').textContent = reportsData.reports.length;
+                
+                if (reportsData.reports.length === 0) {
+                    container.innerHTML = '<div class="empty">No reports found. Waiting for CSP violations...</div>';
+                } else {
+                    renderTable(reportsData.reports);
+                }
+                
+                const now = new Date();
+                document.getElementById('lastUpdated').textContent = 
+                    `Last updated: ${now.toLocaleString()}`;
+                    
+            } catch (error) {
+                container.innerHTML = `<div class="error">Error loading reports: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Refresh';
+            }
+        }
+        
+        function renderTable(reports) {
+            const container = document.getElementById('tableContainer');
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Document URI</th>
+                            <th>Blocked URI</th>
+                            <th>Violated Directive</th>
+                            <th>Remote IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            reports.forEach(report => {
+                const time = new Date(report.receivedAt).toLocaleString();
+                html += `
+                    <tr>
+                        <td class="timestamp">${time}</td>
+                        <td class="uri">${escapeHtml(report.documentUri || '-')}</td>
+                        <td class="uri">${escapeHtml(report.blockedUri || '-')}</td>
+                        <td><span class="directive">${escapeHtml(report.violatedDirective || '-')}</span></td>
+                        <td class="ip">${escapeHtml(report.remoteIp || '-')}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Load reports on page load
+        loadReports();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadReports, 30000);
+    </script>
+</body>
+</html>

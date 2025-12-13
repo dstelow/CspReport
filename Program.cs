@@ -11,11 +11,10 @@ builder.Services.AddSingleton<ICspReportSink, FileCspReportSink>();
 
 var app = builder.Build();
 
-app.MapCspReportEndpoints();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
-// Prefer /health over /. 
-// In newer services, / is often reserved for: static sites, reverse proxies, future UI
-app.MapGet("/", () => "CSP Report API is running");
+app.MapCspReportEndpoints();
 
 app.MapGet("/health", () => Results.Ok("ok"));
 
