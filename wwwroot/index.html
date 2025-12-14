@@ -225,13 +225,13 @@
             btn.textContent = 'Loading...';
             
             try {
-                // Fetch count
-                const countResponse = await fetch('/csp/count');
+                // Fetch count (use relative path for IIS sub-application compatibility)
+                const countResponse = await fetch('csp/count');
                 const countData = await countResponse.json();
                 document.getElementById('totalCount').textContent = countData.count.toLocaleString();
                 
                 // Fetch latest 20 reports
-                const reportsResponse = await fetch('/csp/reports?skip=0&take=20');
+                const reportsResponse = await fetch('csp/reports?skip=0&take=20');
                 const reportsData = await reportsResponse.json();
                 
                 document.getElementById('displayedCount').textContent = reportsData.reports.length;
