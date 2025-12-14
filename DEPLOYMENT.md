@@ -102,6 +102,10 @@ Use this method when deploying to a **remote server** or if you prefer manual co
 Open PowerShell in the project directory **on your development machine**:
 
 ```powershell
+# Clean previous build artifacts (optional but recommended)
+Remove-Item -Path "publish" -Recurse -Force -ErrorAction SilentlyContinue
+
+# Build and publish
 dotnet publish -c Release -o publish
 ```
 
