@@ -52,11 +52,14 @@ Before deploying, ensure you have:
 
 ### Method 1: Automated Deployment (Recommended)
 
-This is the easiest method using the provided PowerShell script.
+This method builds the application locally and deploys to the local IIS server using the provided PowerShell script.
+
+**Note:** This script is designed for deploying to IIS on the **same machine** where you're running it. For remote server deployment, see Method 2 (Manual) and copy files via network share or RDP.
 
 #### Step 1: Open PowerShell as Administrator
 
-Right-click **PowerShell** and select **Run as Administrator**
+On your **local development machine** (which must have IIS installed):
+- Right-click **PowerShell** and select **Run as Administrator**
 
 #### Step 2: Navigate to Project Directory
 
@@ -72,12 +75,14 @@ cd C:\path\to\CspReport
 ```
 
 This will:
-- Build and publish the application
-- Create app pool "CspReportPool"
-- Create website "CspReport" on port 80
-- Deploy to `C:\inetpub\wwwroot\CspReport`
+- Build and publish the application **on your local machine**
+- Create app pool "CspReportPool" **on local IIS**
+- Create website "CspReport" on port 80 **on local IIS**
+- Deploy to `C:\inetpub\wwwroot\CspReport` **locally**
 - Set proper permissions
 - Start the site
+
+**For deploying to a remote server:** Use Method 2 (Manual Deployment) and copy the `publish` folder to the remote server via file share, RDP, or other means.
 
 #### Step 4: Verify Deployment
 
@@ -90,26 +95,40 @@ Open a browser and navigate to:
 
 ### Method 2: Manual Deployment
 
-If you prefer manual control or the script doesn't work for your environment.
+Use this method when deploying to a **remote server** or if you prefer manual control.
 
-#### Step 1: Build and Publish
+#### Step 1: Build and Publish (On Your Development Machine)
 
-Open PowerShell in the project directory:
+Open PowerShell in the project directory **on your development machine**:
 
 ```powershell
 dotnet publish -c Release -o publish
 ```
 
-#### Step 2: Create Deployment Directory
+#### Step 2: Copy Files to Server
 
+**If deploying to a remote server:** Copy the entire `publish\` folder to your server using:
+- File share (e.g., `\\ServerName\C$\Temp\CspReport`)
+- Remote Desktop (RDP) and copy/paste
+- FTP/SFTP
+- Azure DevOps / GitHub Actions
+- Any other file transfer method
+
+**The remaining steps should be executed on the target IIS server.**
+
+#### Step 3: Create Deployment Directory (On Server)
+#### Step 5: Create Application Pool (On Server)
+
+On the **target server**, open **IIS Manager** (run `inetmgr`) or use PowerShell:
 ```powershell
 New-Item -Path "C:\inetpub\wwwroot\CspReport" -ItemType Directory -Force
 ```
 
-#### Step 3: Copy Files
+#### Step 4: Copy Files (On Server)
 
 ```powershell
-Copy-Item -Path "publish\*" -Destination "C:\inetpub\wwwroot\CspReport" -Recurse -Force
+# If files were copied to C:\Temp\CspReport\publish
+Copy-Item -Path "C:\Temp\CspReport\publish\*" -Destination "C:\inetpub\wwwroot\CspReport" -Recurse -Force
 ```
 
 #### Step 4: Create Application Pool
@@ -127,7 +146,7 @@ Set-ItemProperty "IIS:\AppPools\CspReportPool" -Name "managedRuntimeVersion" -Va
 Set-ItemProperty "IIS:\AppPools\CspReportPool" -Name "startMode" -Value "AlwaysRunning"
 ```
 
-#### Step 5: Create Website
+#### Step 6: Create Website (On Server)
 
 ```powershell
 New-Website -Name "CspReport" `
@@ -136,7 +155,7 @@ New-Website -Name "CspReport" `
     -Port 80
 ```
 
-#### Step 6: Set Permissions
+#### Step 7: Set Permissions (On Server)
 
 ```powershell
 # Grant read/execute to IIS_IUSRS
@@ -159,16 +178,18 @@ $logsAcl.SetAccessRule($logsRule)
 Set-Acl $logsPath $logsAcl
 ```
 
-#### Step 7: Start the Site
+#### Step 8: Start the Site (On Server)
 
 ```powershell
 Start-WebAppPool -Name "CspReportPool"
 Start-Website -Name "CspReport"
 ```
 
-#### Step 8: Verify
+#### Step 9: Verify (On Server)
 
-Browse to `http://localhost/health` - you should see `"ok"`
+On the **target server**, browse to `http://localhost/health` - you should see `"ok"`
+
+From your development machine, browse to `http://your-server-name/health`
 
 ---
 
