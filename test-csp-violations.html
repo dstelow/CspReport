@@ -5,8 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSP Violation Test Page</title>
     
-    <!-- Note: CSP report-uri must be set via HTTP header, not meta tag.
-         Deploy the accompanying web.config file to set the header in IIS. -->
+    <!-- Content Security Policy with report-uri -->
+    <!-- Note: report-uri does NOT work in meta tags - must be set via HTTP header by web server -->
+    <!--
+    <meta http-equiv="Content-Security-Policy-Report-Only" 
+          content="default-src 'self'; 
+                   script-src 'self' 'unsafe-inline'; 
+                   style-src 'self' 'unsafe-inline'; 
+                   img-src 'self' data:; 
+                   font-src 'self'; 
+                   connect-src 'self'; 
+                   report-uri http://claritygroupdev.northcentralus.cloudapp.azure.com/CspReport/csp/report-uri;">
+    -->
     
     <style>
         * {
