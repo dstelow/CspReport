@@ -63,13 +63,24 @@ public sealed class FileCspReportSink : ICspReportSink
         await _lock.WaitAsync(ct);
         try
         {
+            // Read all lines first, then reverse to get newest first (DESC order)
+            var allLines = new List<string>();
+            using (var sr = new StreamReader(_path))
+            {
+                string? line;
+                while ((line = await sr.ReadLineAsync(ct)) is not null)
+                {
+                    allLines.Add(line);
+                }
+            }
+            
+            // Reverse to get newest first
+            allLines.Reverse();
+            
             var reports = new List<CspReportEnvelope>();
-            using var sr = new StreamReader(_path);
-            
             int currentLine = 0;
-            string? line;
             
-            while ((line = await sr.ReadLineAsync(ct)) is not null)
+            foreach (var line in allLines)
             {
                 if (currentLine >= skip && reports.Count < take)
                 {
