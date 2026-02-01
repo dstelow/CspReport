@@ -6,5 +6,6 @@ public interface ICspReportSink
 {
     Task WriteAsync(CspReportEnvelope report, CancellationToken ct);
     Task<long> GetCountAsync(CancellationToken ct = default);
-    Task<IReadOnlyList<CspReportEnvelope>> GetReportsAsync(int skip = 0, int take = 10, CancellationToken ct = default);
+    Task<IReadOnlyList<CspReportEnvelope>> GetReportsAsync(int skip = 0, int take = 10, DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null, CancellationToken ct = default);
+    Task<long> GetCountInRangeAsync(DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null, CancellationToken ct = default);
 }

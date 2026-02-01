@@ -55,7 +55,7 @@ public sealed class FileCspReportSink : ICspReportSink
         }
     }
 
-    public async Task<IReadOnlyList<CspReportEnvelope>> GetReportsAsync(int skip = 0, int take = 10, CancellationToken ct = default)
+    public async Task<IReadOnlyList<CspReportEnvelope>> GetReportsAsync(int skip = 0, int take = 10, DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null, CancellationToken ct = default)
     {
         if (!File.Exists(_path))
             return Array.Empty<CspReportEnvelope>();
@@ -82,27 +82,77 @@ public sealed class FileCspReportSink : ICspReportSink
             
             foreach (var line in allLines)
             {
-                if (currentLine >= skip && reports.Count < take)
+                try
                 {
-                    try
+                    var envelope = JsonSerializer.Deserialize<CspReportEnvelope>(line, JsonOptions);
+                    if (envelope is null)
+                        continue;
+                    
+                    // Apply date range filter
+                    if (fromDate.HasValue && envelope.ReceivedAt < fromDate.Value)
+                        continue;
+                    if (toDate.HasValue && envelope.ReceivedAt > toDate.Value)
+                        continue;
+                    
+                    if (currentLine >= skip && reports.Count < take)
                     {
-                        var envelope = JsonSerializer.Deserialize<CspReportEnvelope>(line, JsonOptions);
-                        if (envelope is not null)
-                            reports.Add(envelope);
+                        reports.Add(envelope);
                     }
-                    catch (JsonException)
-                    {
-                        // Skip malformed lines
-                    }
+                    
+                    currentLine++;
+                    
+                    if (reports.Count >= take)
+                        break;
                 }
-                
-                currentLine++;
-                
-                if (reports.Count >= take)
-                    break;
+                catch (JsonException)
+                {
+                    // Skip malformed lines
+                }
             }
             
             return reports;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task<long> GetCountInRangeAsync(DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null, CancellationToken ct = default)
+    {
+        if (!File.Exists(_path))
+            return 0;
+
+        await _lock.WaitAsync(ct);
+        try
+        {
+            long count = 0;
+            using var sr = new StreamReader(_path);
+            string? line;
+            
+            while ((line = await sr.ReadLineAsync(ct)) is not null)
+            {
+                try
+                {
+                    var envelope = JsonSerializer.Deserialize<CspReportEnvelope>(line, JsonOptions);
+                    if (envelope is null)
+                        continue;
+                    
+                    // Apply date range filter
+                    if (fromDate.HasValue && envelope.ReceivedAt < fromDate.Value)
+                        continue;
+                    if (toDate.HasValue && envelope.ReceivedAt > toDate.Value)
+                        continue;
+                    
+                    count++;
+                }
+                catch (JsonException)
+                {
+                    // Skip malformed lines
+                }
+            }
+            
+            return count;
         }
         finally
         {

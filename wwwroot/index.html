@@ -76,6 +76,35 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #e0e0e0;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .controls-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .date-range label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .date-range input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #333;
         }
         
         .refresh-btn {
@@ -102,6 +131,21 @@
         .last-updated {
             font-size: 13px;
             color: #666;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px 30px;
+            border-left: 4px solid #ffc107;
+            margin: 0 30px;
+            margin-top: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .warning.show {
+            display: block;
         }
         
         .table-container {
@@ -205,10 +249,24 @@
         </div>
         
         <div class="controls">
-            <button class="refresh-btn" id="refreshBtn" onclick="loadReports()">
-                Refresh
-            </button>
+            <div class="controls-left">
+                <button class="refresh-btn" id="refreshBtn" onclick="loadReports()">
+                    Refresh
+                </button>
+                <div class="date-range">
+                    <label for="fromDate">From:</label>
+                    <input type="date" id="fromDate">
+                </div>
+                <div class="date-range">
+                    <label for="toDate">To:</label>
+                    <input type="date" id="toDate">
+                </div>
+            </div>
             <div class="last-updated" id="lastUpdated">Never updated</div>
+        </div>
+        
+        <div class="warning" id="warningMessage">
+            The selected date range contains more than 400 reports. Showing the most recent 400 only.
         </div>
         
         <div class="table-container" id="tableContainer">
@@ -217,24 +275,55 @@
     </div>
 
     <script>
+        // Initialize date range to 2 months ago to today
+        function initializeDateRange() {
+            const today = new Date();
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(today.getMonth() - 2);
+            
+            document.getElementById('toDate').valueAsDate = today;
+            document.getElementById('fromDate').valueAsDate = twoMonthsAgo;
+        }
+        
         async function loadReports() {
             const btn = document.getElementById('refreshBtn');
             const container = document.getElementById('tableContainer');
+            const warning = document.getElementById('warningMessage');
             
             btn.disabled = true;
             btn.textContent = 'Loading...';
+            warning.classList.remove('show');
             
             try {
+                // Get date range values
+                const fromDate = document.getElementById('fromDate').value;
+                const toDate = document.getElementById('toDate').value;
+                
                 // Fetch count (use relative path for IIS sub-application compatibility)
                 const countResponse = await fetch('csp/count');
                 const countData = await countResponse.json();
                 document.getElementById('totalCount').textContent = countData.count.toLocaleString();
                 
-                // Fetch latest 400 reports
-                const reportsResponse = await fetch('csp/reports?skip=0&take=400');
+                // Build query string with date range
+                let url = 'csp/reports?skip=0&take=400';
+                if (fromDate) {
+                    url += `&fromDate=${fromDate}T00:00:00Z`;
+                }
+                if (toDate) {
+                    // Include the entire day by setting time to end of day
+                    url += `&toDate=${toDate}T23:59:59Z`;
+                }
+                
+                // Fetch reports with date range
+                const reportsResponse = await fetch(url);
                 const reportsData = await reportsResponse.json();
                 
                 document.getElementById('displayedCount').textContent = reportsData.reports.length;
+                
+                // Show warning if there are more reports than displayed
+                if (reportsData.hasMore) {
+                    warning.classList.add('show');
+                }
                 
                 if (reportsData.reports.length === 0) {
                     container.innerHTML = '<div class="empty">No reports found. Waiting for CSP violations...</div>';
@@ -294,7 +383,8 @@
             return div.innerHTML;
         }
         
-        // Load reports on page load
+        // Initialize date range and load reports on page load
+        initializeDateRange();
         loadReports();
         
         // Auto-refresh every 30 seconds
