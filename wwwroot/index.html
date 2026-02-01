@@ -307,11 +307,14 @@
                 // Build query string with date range
                 let url = 'csp/reports?skip=0&take=400';
                 if (fromDate) {
-                    // Send date only, let server parse as local date
-                    url += `&fromDate=${fromDate}`;
+                    // Send date with timezone offset so server can convert properly
+                    const offset = new Date().getTimezoneOffset();
+                    url += `&fromDate=${fromDate}&timezoneOffset=${offset}`;
                 }
                 if (toDate) {
+                    const offset = new Date().getTimezoneOffset();
                     url += `&toDate=${toDate}`;
+                    if (!fromDate) url += `&timezoneOffset=${offset}`;
                 }
                 
                 // Fetch reports with date range

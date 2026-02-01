@@ -48,7 +48,8 @@ public static class CspReportEndpoints
         int skip = 0,
         int take = 400,
         string? fromDate = null,
-        string? toDate = null)
+        string? toDate = null,
+        int timezoneOffset = 0)
     {
         if (take < 1 || take > 400)
             return Results.BadRequest(new { error = "take must be between 1 and 400" });
@@ -56,18 +57,23 @@ public static class CspReportEndpoints
         if (skip < 0)
             return Results.BadRequest(new { error = "skip must be non-negative" });
 
-        // Parse date strings as local dates
+        // Parse date strings and convert to UTC range based on user's timezone
         DateTimeOffset? fromDateOffset = null;
         DateTimeOffset? toDateOffset = null;
         
         if (!string.IsNullOrEmpty(fromDate) && DateOnly.TryParse(fromDate, out var fromDateOnly))
         {
-            fromDateOffset = new DateTimeOffset(fromDateOnly.ToDateTime(TimeOnly.MinValue), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now));
+            // User's local date start converted to UTC
+            // timezoneOffset is minutes behind UTC (positive for behind, negative for ahead)
+            var userLocalStart = fromDateOnly.ToDateTime(TimeOnly.MinValue);
+            fromDateOffset = new DateTimeOffset(userLocalStart.AddMinutes(timezoneOffset), TimeSpan.Zero);
         }
         
         if (!string.IsNullOrEmpty(toDate) && DateOnly.TryParse(toDate, out var toDateOnly))
         {
-            toDateOffset = new DateTimeOffset(toDateOnly.ToDateTime(TimeOnly.MaxValue), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now));
+            // User's local date end converted to UTC
+            var userLocalEnd = toDateOnly.ToDateTime(TimeOnly.MaxValue);
+            toDateOffset = new DateTimeOffset(userLocalEnd.AddMinutes(timezoneOffset), TimeSpan.Zero);
         }
 
         var reports = await sink.GetReportsAsync(skip, take, fromDateOffset, toDateOffset);
