@@ -47,8 +47,8 @@ public static class CspReportEndpoints
         ICspReportSink sink,
         int skip = 0,
         int take = 400,
-        DateTimeOffset? fromDate = null,
-        DateTimeOffset? toDate = null)
+        string? fromDate = null,
+        string? toDate = null)
     {
         if (take < 1 || take > 400)
             return Results.BadRequest(new { error = "take must be between 1 and 400" });
@@ -56,8 +56,22 @@ public static class CspReportEndpoints
         if (skip < 0)
             return Results.BadRequest(new { error = "skip must be non-negative" });
 
-        var reports = await sink.GetReportsAsync(skip, take, fromDate, toDate);
-        var totalInRange = await sink.GetCountInRangeAsync(fromDate, toDate);
+        // Parse date strings as local dates
+        DateTimeOffset? fromDateOffset = null;
+        DateTimeOffset? toDateOffset = null;
+        
+        if (!string.IsNullOrEmpty(fromDate) && DateOnly.TryParse(fromDate, out var fromDateOnly))
+        {
+            fromDateOffset = new DateTimeOffset(fromDateOnly.ToDateTime(TimeOnly.MinValue), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now));
+        }
+        
+        if (!string.IsNullOrEmpty(toDate) && DateOnly.TryParse(toDate, out var toDateOnly))
+        {
+            toDateOffset = new DateTimeOffset(toDateOnly.ToDateTime(TimeOnly.MaxValue), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now));
+        }
+
+        var reports = await sink.GetReportsAsync(skip, take, fromDateOffset, toDateOffset);
+        var totalInRange = await sink.GetCountInRangeAsync(fromDateOffset, toDateOffset);
         var hasMore = totalInRange > reports.Count;
         
         return Results.Ok(new { skip, take, count = reports.Count, totalInRange, hasMore, reports });

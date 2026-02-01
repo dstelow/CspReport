@@ -307,12 +307,11 @@
                 // Build query string with date range
                 let url = 'csp/reports?skip=0&take=400';
                 if (fromDate) {
-                    // Send local date start of day
-                    url += `&fromDate=${fromDate}T00:00:00`;
+                    // Send date only, let server parse as local date
+                    url += `&fromDate=${fromDate}`;
                 }
                 if (toDate) {
-                    // Include the entire day by setting time to end of day
-                    url += `&toDate=${toDate}T23:59:59`;
+                    url += `&toDate=${toDate}`;
                 }
                 
                 // Fetch reports with date range

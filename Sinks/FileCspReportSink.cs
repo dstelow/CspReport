@@ -88,10 +88,11 @@ public sealed class FileCspReportSink : ICspReportSink
                     if (envelope is null)
                         continue;
                     
-                    // Apply date range filter
-                    if (fromDate.HasValue && envelope.ReceivedAt < fromDate.Value)
+                    // Apply date range filter - compare date parts only in local time
+                    var receivedDate = envelope.ReceivedAt.LocalDateTime.Date;
+                    if (fromDate.HasValue && receivedDate < fromDate.Value.LocalDateTime.Date)
                         continue;
-                    if (toDate.HasValue && envelope.ReceivedAt > toDate.Value)
+                    if (toDate.HasValue && receivedDate > toDate.Value.LocalDateTime.Date)
                         continue;
                     
                     if (currentLine >= skip && reports.Count < take)
@@ -138,10 +139,11 @@ public sealed class FileCspReportSink : ICspReportSink
                     if (envelope is null)
                         continue;
                     
-                    // Apply date range filter
-                    if (fromDate.HasValue && envelope.ReceivedAt < fromDate.Value)
+                    // Apply date range filter - compare date parts only in local time
+                    var receivedDate = envelope.ReceivedAt.LocalDateTime.Date;
+                    if (fromDate.HasValue && receivedDate < fromDate.Value.LocalDateTime.Date)
                         continue;
-                    if (toDate.HasValue && envelope.ReceivedAt > toDate.Value)
+                    if (toDate.HasValue && receivedDate > toDate.Value.LocalDateTime.Date)
                         continue;
                     
                     count++;
