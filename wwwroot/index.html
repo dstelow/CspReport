@@ -230,8 +230,8 @@
                 const countData = await countResponse.json();
                 document.getElementById('totalCount').textContent = countData.count.toLocaleString();
                 
-                // Fetch latest 200 reports
-                const reportsResponse = await fetch('csp/reports?skip=0&take=200');
+                // Fetch latest 400 reports
+                const reportsResponse = await fetch('csp/reports?skip=0&take=400');
                 const reportsData = await reportsResponse.json();
                 
                 document.getElementById('displayedCount').textContent = reportsData.reports.length;

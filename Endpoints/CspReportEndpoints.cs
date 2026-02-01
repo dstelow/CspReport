@@ -46,10 +46,10 @@ public static class CspReportEndpoints
     private static async Task<IResult> GetReports(
         ICspReportSink sink,
         int skip = 0,
-        int take = 200)
+        int take = 400)
     {
-        if (take < 1 || take > 200)
-            return Results.BadRequest(new { error = "take must be between 1 and 200" });
+        if (take < 1 || take > 400)
+            return Results.BadRequest(new { error = "take must be between 1 and 400" });
 
         if (skip < 0)
             return Results.BadRequest(new { error = "skip must be non-negative" });
